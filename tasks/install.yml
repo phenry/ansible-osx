@@ -1,0 +1,333 @@
+---
+
+# https://github.com/sorin-ionescu/prezto
+- name: change shell to zsh
+  command: chsh -s /bin/zsh {{ ansible_user_id }}
+  become: yes
+  become_method: sudo
+
+- name: install homebrew
+  command: ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" creates=/usr/local/Cellar
+
+#- name: update homebrew
+#  homebrew: update_homebrew=yes
+
+# http://hackercodex.com/guide/python-development-environment-on-mac-osx/
+- name: install python from homebrew
+  #command: brew install python
+  homebrew: name={{ item }}
+  with_items:
+    - python
+    - python3
+  
+- name: install virtualenv from pip
+  #command: PIP_REQUIRE_VIRTUALENV="" pip install virtualenv virtualenvwrapper
+  pip: name={{ item }}
+  with_items:
+    - virtualenv
+    - virtualenvwrapper
+    
+- name: install virtualenv from pip2
+  #command: PIP_REQUIRE_VIRTUALENV="" pip2 install virtualenv virtualenvwrapper
+  pip: name={{ item }} executable=pip2
+  with_items:
+    - virtualenv
+    - virtualenvwrapper
+
+# (Deprecated)
+#  - name: easy install pip
+#    easy_install: name=pip
+#    sudo: yes
+#    #command: sudo easy_install pip
+
+#  - name: install apps from pip
+#    pip: name=setuptools extra_args='--no-use-wheel --upgrade'
+#    sudo: yes
+#    #command: sudo pip install setuptools --no-use-wheel --upgrade
+
+- name: install apps from homebrew
+  homebrew: name={{ item }}
+  with_items:
+    - libyaml
+
+# https://devopsu.com/guides/ansible-mac-osx.html
+- name: install apps from pip2
+  #command: pip2 install ansible
+  pip: name=ansible executable=pip2
+    
+- name: install apps from pip
+  #command: pip install --user Fabric
+  pip: name={{ item }}
+  with_items:
+    - tendo
+    - argcomplete
+    - watchdog
+    - Fabric
+    - httpie
+    - Requests
+
+- name: tap external homebrew repositories
+  homebrew_tap: tap={{ item }}
+  with_items:
+    - homebrew/dupes
+    - homebrew/versions
+    - homebrew/php
+
+- name: install apps from homebrew
+  #command: brew install wget
+  homebrew: name={{ item }}
+  with_items:
+    - oath-toolkit
+    - bazaar
+    - docker
+    #- ftp-cloudfs
+    - nginx
+    - php56
+    - rsync
+    - sqlite
+    - ssh-copy-id
+    - watchman
+    - wget
+    - zbar
+
+
+# From: https://github.com/osxc/homebrew
+- name: assert cask presence
+  stat: path={{ install_dir }}/bin/brew-cask
+  register: cask_installed
+  
+- name: tap the cask repository
+  homebrew_tap: tap=caskroom/cask state=present
+  when: cask_installed.stat.exists == false
+  
+- name: install brew-cask
+  homebrew: name=brew-cask state=latest update_homebrew=yes
+  when: cask_installed.stat.exists == false
+  
+#  - name: add new cask opts to .zshenv
+#    lineinfile: dest='~/.zshenv'
+#                regexp='^export HOMEBREW_CASK_OPTS'
+#                line='export HOMEBREW_CASK_OPTS="--appdir=/Applications"'
+#                state=present
+
+
+- name: install apps from homebrew cask
+  #command: brew-cask install iterm2
+  homebrew_cask: name={{ item }}
+  with_items:
+    - atom
+    - eclipse-java
+    #- firefox
+    - google-chrome
+    - gpgtools
+    - haroopad
+    - hipchat
+    - iterm2
+    - keepassx
+    #- lastpass
+    - macdown
+    #- macpass
+    - sony-ericsson-bridge
+    - sourcetree
+    - sublime-text
+    - viber
+    #- virtualbox
+    - xmind
+    - xnviewmp
+
+
+# Eclipse installation: https://github.com/AlbanAndrieu/ansible-eclipse
+
+
+       
+# From: https://github.com/spencergibb/battleschool/tree/master/share/library
+#
+#  - name: install java 8 update 40
+#    mac_pkg: pkg_name=com.oracle.jdk8u40 pkg_version=1.1
+#             url=http://download.oracle.com/otn-pub/java/jdk/8u40-b25/jdk-8u40-macosx-x64.dmg
+#             curl_opts="-L --cookie oraclelicense=accept-securebackup-cookie"
+#             archive_type=dmg archive_path='JDK 8 Update 40.pkg'
+#    sudo: yes
+
+#    # https://raw.githubusercontent.com/spencergibb/ansible-osx/master/homebrew.yml
+#    - name: install homebrew
+#      mac_pkg: pkg_type=script script_creates=/usr/local/bin/brew
+#               script_prefix='echo | ' script_exe=ruby
+#               url=https://raw.github.com/Homebrew/homebrew/go/install
+    
+#  - name: get oh-my-zsh script
+#    get_url: url=http://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh dest=/tmp/zsh.sh
+#  - name: change file permission to be executable
+#    command: chmod +x /tmp/oh-my-zsh.sh
+#  - name: install zsh
+#    script: /tmp/oh-my-zsh.sh
+
+#  # http://ohmyz.sh/
+#  - name: oh-my-zsh
+#    command: curl -L http://install.ohmyz.sh | sh
+#    command: curl -L https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh | sh
+    
+
+#    - name: create homdir symlinks
+#      file: src={{item.from}} dest={{item.to}} state=link
+#      sudo: no
+#      with_items:
+#         - from: ~/Dropbox/ubuntu/.bash_aliases
+#           to: ~/.bash_aliases
+#         - from: ~/Dropbox/ubuntu/.bash_logout
+#           to: ~/.bash_logout
+#         - from: ~/Dropbox/ubuntu/.bashrc
+#           to: ~/.bashrc
+#         - from: ~/Dropbox/mac/battleschool
+#           to: ~/.battleschool
+#         - from: ~/Dropbox/ubuntu/.ctags
+#           to: ~/.ctags
+#         - from: ~/Dropbox/ubuntu/.gitconfig
+#           to: ~/.gitconfig
+#         - from: ~/Dropbox/ubuntu/.inputrc
+#           to: ~/.inputrc
+#         - from: ~/Dropbox/ubuntu/.profile
+#           to: ~/.profile
+#         - from: ~/Dropbox/ubuntu/.todo
+#           to: ~/.todo
+#         - from: ~/Dropbox/ubuntu/.vimrc
+#           to: ~/.vimrc
+#         - from: ~/Dropbox/ubuntu/.zsh
+#           to: ~/.zsh
+#         - from: ~/Dropbox/ubuntu/.zshrc
+#           to: ~/.zshrc
+#         - from: ~/Dropbox/mac/bin
+#           to: ~/bin
+
+         
+#    - name: install gems
+#      gem: name={{item}} state=latest
+#      with_items:
+#          - brewbygems
+#          - bundler
+#          - compass
+
+
+#  vars:
+#    http_port: 80
+#    max_clients: 200
+#  tasks:
+#  - name: ensure apache is at the latest version
+#    yum: pkg=httpd state=latest
+#  - name: write the apache config file
+#    template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+#    notify:
+#    - restart apache
+#  - name: ensure apache is running (and enable it at boot)
+#    service: name=httpd state=started enabled=yes
+#  handlers:
+#    - name: restart apache
+#      service: name=httpd state=restarted
+          
+
+          
+#~ ❯❯❯ brew install oath-toolkit
+#==> Installing dependencies for oath-toolkit: openssl, libtasn1, gmp, nettle, gnutls, libgcrypt, libxmlsec1
+#==> Installing oath-toolkit dependency: openssl
+#==> Downloading https://homebrew.bintray.com/bottles/openssl-1.0.2d_1.yosemite.bottle.tar.gz
+######################################################################### 100.0%
+#==> Pouring openssl-1.0.2d_1.yosemite.bottle.tar.gz
+#==> Caveats
+#A CA file has been bootstrapped using certificates from the system
+#keychain. To add additional certificates, place .pem files in
+#  /usr/local/etc/openssl/certs
+#
+#and run
+#  /usr/local/opt/openssl/bin/c_rehash
+#
+#This formula is keg-only, which means it was not symlinked into /usr/local.
+#
+#Apple has deprecated use of OpenSSL in favor of its own TLS and crypto libraries
+#
+#Generally there are no consequences of this for you. If you build your
+#own software and it requires this formula, you'll need to add to your
+#build variables:
+#
+#    LDFLAGS:  -L/usr/local/opt/openssl/lib
+#    CPPFLAGS: -I/usr/local/opt/openssl/include 
+
+
+
+# ❯❯❯ brew install php56
+#==> Installing php56 from homebrew/homebrew-php
+#==> Installing dependencies for homebrew/php/php56: icu4c, unixodbc
+#==> Installing homebrew/php/php56 dependency: icu4c
+#==> Downloading https://homebrew.bintray.com/bottles/icu4c-55.1.yosemite.bottle.tar.gz
+######################################################################### 100.0%
+#==> Pouring icu4c-55.1.yosemite.bottle.tar.gz
+#==> Caveats
+#This formula is keg-only, which means it was not symlinked into /usr/local.
+#
+#OS X provides libicucore.dylib (but nothing else).
+#
+#Generally there are no consequences of this for you. If you build your
+#own software and it requires this formula, you'll need to add to your
+#build variables:
+#
+#    LDFLAGS:  -L/usr/local/opt/icu4c/lib
+#    CPPFLAGS: -I/usr/local/opt/icu4c/include
+#
+#==> Summary
+#🍺  /usr/local/Cellar/icu4c/55.1: 244 files, 66M
+#==> Installing homebrew/php/php56 dependency: unixodbc
+#==> Downloading https://homebrew.bintray.com/bottles/unixodbc-2.3.2_1.yosemite.bottle.1.tar.gz
+######################################################################### 100.0%
+#==> Pouring unixodbc-2.3.2_1.yosemite.bottle.1.tar.gz
+#🍺  /usr/local/Cellar/unixodbc/2.3.2_1: 31 files, 1.0M
+#==> Installing homebrew/php/php56
+#==> Downloading https://homebrew.bintray.com/bottles-php/php56-5.6.12.yosemite.bottle.tar.gz
+######################################################################### 100.0%
+#==> Pouring php56-5.6.12.yosemite.bottle.tar.gz
+#==> Caveats
+#To enable PHP in Apache add the following to httpd.conf and restart Apache:
+#    LoadModule php5_module    /usr/local/opt/php56/libexec/apache2/libphp5.so
+#
+#The php.ini file can be found in:
+#    /usr/local/etc/php/5.6/php.ini
+#
+#✩✩✩✩ Extensions ✩✩✩✩
+#
+#If you are having issues with custom extension compiling, ensure that
+#you are using the brew version, by placing /usr/local/bin before /usr/sbin in your PATH:
+#
+#      PATH="/usr/local/bin:$PATH"
+#
+#PHP56 Extensions will always be compiled against this PHP. Please install them
+#using --without-homebrew-php to enable compiling against system PHP.
+#
+#✩✩✩✩ PHP CLI ✩✩✩✩
+#
+#If you wish to swap the PHP you use on the command line, you should add the following to ~/.bashrc,
+#~/.zshrc, ~/.profile or your shell's equivalent configuration file:
+#
+#      export PATH="$(brew --prefix homebrew/php/php56)/bin:$PATH"
+#
+#✩✩✩✩ FPM ✩✩✩✩
+#
+#To launch php-fpm on startup:
+#    mkdir -p ~/Library/LaunchAgents
+#    cp /usr/local/opt/php56/homebrew.mxcl.php56.plist ~/Library/LaunchAgents/
+#    launchctl load -w ~/Library/LaunchAgents/homebrew.mxcl.php56.plist
+#
+#The control script is located at /usr/local/opt/php56/sbin/php56-fpm
+#
+#OS X 10.8 and newer come with php-fpm pre-installed, to ensure you are using the brew version you need to make sure /usr/local/sbin is before /usr/sbin in your PATH:
+#
+#  PATH="/usr/local/sbin:$PATH"
+#
+#You may also need to edit the plist to use the correct "UserName".
+#
+#Please note that the plist was called 'homebrew-php.josegonzalez.php56.plist' in old versions
+#of this formula.
+#
+#To have launchd start homebrew/php/php56 at login:
+#  ln -sfv /usr/local/opt/php56/*.plist ~/Library/LaunchAgents
+#Then to load homebrew/php/php56 now:
+#  launchctl load ~/Library/LaunchAgents/homebrew.mxcl.php56.plist
+#==> Summary
+#🍺  /usr/local/Cellar/php56/5.6.12: 501 files, 52M
